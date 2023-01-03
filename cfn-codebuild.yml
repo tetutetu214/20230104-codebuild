@@ -10,25 +10,42 @@ Metadata:
       - Label:
           default: "Lambda Configuration"
         Parameters:
-        - RepositoryName
-        - TagsName
+        - BuildName
+        - PACKAGED_TEMPLATE_FILE_PATH
+        - BuildSpec
+        - ArtifactStoreBucket
+        - ModuleNameOwner
+        - DevModuleStackName
+
 # ------------------------------------------------------------#
 #  InputParameters
 # ------------------------------------------------------------#
 Parameters:
   BuildName:
     Type: String
-    Default: "cfn-codecommit-inamura"
+    Default: cfn-codecommit-inamura
   PACKAGED_TEMPLATE_FILE_PATH:
     Type: String
-    Default: 
-
+    Default: packaged.yml
+  BuildSpec:
+    Type: String
+    Default: pipeline_settings/buildspec.yml
+  ArtifactStoreBucket:
+    Type: String
+    Default: cfn-s3-20230103-inamura
+  ModuleNameOwner:
+    Type: String
+    Default: cfn-codepipeline-inamura
+  DevModuleStackName:
+    Type: String
+    Default: cfn-dev-codepipeline-inamura
+  
 # ------------------------------------------------------------#
 #  Resources
 # ------------------------------------------------------------#
 Resources:
 # ------------------------------------------------------------#
-#  Lambda
+#  CodeBuild
 # ------------------------------------------------------------#
   BuildProject:
     Type: AWS::CodeBuild::Project
@@ -43,14 +60,14 @@ Resources:
           - Name: PACKAGED_TEMPLATE_FILE_PATH
             Value: !Ref PACKAGED_TEMPLATE_FILE_PATH
           - Name: S3_BUCKET
-            Value: !ImportValue cfn-s3-BucketName
+            Value: !Ref ArtifactStoreBucket
       Name: !Ref BuildName
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Ref BuildSpec
 
-  CodeBuildRole:
+  BuildRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -89,6 +106,134 @@ Resources:
                 Effect: Allow
                 Action: cloudformation:ValidateTemplate
                 Resource: "*"
+# ------------------------------------------------------------#
+#  CodeDeploy
+# ------------------------------------------------------------#
+  PipelineDev:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Ref ModuleName
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactStoreBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              InmputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              Configuration:
+                RepositoryName: !ImportValue cfn-codecommit-inamura-name
+                BranchName: master
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: SourceOutput
+        - Name: Build
+          Actions:
+            - InputArtifacts:
+                - Name: SourceOutput
+              Name: Package
+              ActionTypeId:
+                Category: Build
+                Provider: CodeBuild
+                Owner: AWS
+                Version: 1
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref BuildName
+
+        - Name: Deploy
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                RoleArn: !GetAtt PipelineDeployRole.Arn
+                StackName: !Ref DevModuleStackName
+                ChangeSetName: !Sub ${DevModuleStackName}-changeset
+                Capabilities: CAPABILITY_NAMED_IAM
+
+#################ここから構築スタート
+参考URL 
+https://qiita.com/ytaka95/items/5899c44c85e71fdc5273#param_devjson-param_prodjson
+https://www.protosolution.co.jp/approach/story/20211221.html
+https://qiita.com/leomaro7/items/41cbe8aa7c32298ec665
+https://dev.classmethod.jp/articles/delivery-by-codepipeline-codecommit-codebuild-codedeploy/#toc-7
+https://dev.classmethod.jp/articles/cross-account-codecommit-codepipeline-with-cfn/
+
+                TemplatePath: !Sub BuildOutput::${PACKAGED_TEMPLATE_FILE_PATH}
+                TemplateConfiguration: !Sub BuildOutput::${DevDeployParamFile}
+              RunOrder: '1'
+
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                ChangeSetName: !Sub ${DevModuleStackName}-changeset
+                StackName: !Ref DevModuleStackName
+              RunOrder: '2'
+
+  PipelineDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: cloudformation.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${ModuleName}DeployPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
+              - Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:PassRole
+                  - iam:DeleteRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:GetRolePolicy
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
+
+
+
+
 # ------------------------------------------------------------#
 # Output Parameters
 #------------------------------------------------------------#          
