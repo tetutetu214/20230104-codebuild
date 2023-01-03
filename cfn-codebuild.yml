@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  CodeCommit Create
+# ------------------------------------------------------------#
+#  Metadata
+# ------------------------------------------------------------#
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: "Lambda Configuration"
+        Parameters:
+        - RepositoryName
+        - TagsName
+# ------------------------------------------------------------#
+#  InputParameters
+# ------------------------------------------------------------#
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: "cfn-codecommit-inamura"
+  TagsName:
+    Type: String
+    Description: UserName
+    Default: "inamura"
+# ------------------------------------------------------------#
+#  Resources
+# ------------------------------------------------------------#
+Resources:
+# ------------------------------------------------------------#
+#  Lambda
+# ------------------------------------------------------------#
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+        EnvironmentVariables:
+          - Name: PACKAGED_TEMPLATE_FILE_PATH
+            Value: !Ref PackagedTemplateFilePath
+          - Name: S3_BUCKET
+            Value: !Ref ArtifactStoreBucket
+      Name: !Ref ModuleName
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Ref BuildSpec
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: CloudWatchLogsAccess
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+
+              - Sid: S3Access
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
+
+              - Sid: CloudFormationAccess
+                Effect: Allow
+                Action: cloudformation:ValidateTemplate
+                Resource: "*"
+# ------------------------------------------------------------#
+# Output Parameters
+#------------------------------------------------------------#          
+# Outputs:
+#   CodeCommitArn:
+#     Value: !GetAtt CodeCommit.Arn
+#     Export:
+#       Name: !Sub "${RepositoryName}-arn"
+#   RepositoryName:
+#     Value: !Ref RepositoryName
+#     Export:
+#       Name: !Sub "${RepositoryName}-name"
