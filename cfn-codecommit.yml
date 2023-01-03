@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  CodeCommit Create
+# ------------------------------------------------------------#
+#  Metadata
+# ------------------------------------------------------------#
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: "Lambda Configuration"
+        Parameters:
+        - RepositoryName
+        - TagsName
+# ------------------------------------------------------------#
+#  InputParameters
+# ------------------------------------------------------------#
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: "cfn-codecommit-inamura"
+  TagsName:
+    Type: String
+    Description: UserName
+    Default: "inamura"
+# ------------------------------------------------------------#
+#  Resources
+# ------------------------------------------------------------#
+Resources:
+# ------------------------------------------------------------#
+#  Lambda
+# ------------------------------------------------------------#
+  CodeCommit:
+    Type: AWS::CodeCommit::Repository
+    Properties: 
+      RepositoryName: !Ref RepositoryName
+      RepositoryDescription: !Sub "Source code for ${RepositoryName}"
+      Tags: 
+        - Key: "User"
+          Value: !Ref TagsName
+      Code:
+        S3:
+          Bucket: !ImportValue cfn-s3-BucketName
+          Key: cicd.zip
+# ------------------------------------------------------------#
+# Output Parameters
+#------------------------------------------------------------#          
+Outputs:
+  CodeCommitArn:
+    Value: !GetAtt CodeCommit.Arn
+    Export:
+      Name: !Sub "${RepositoryName}-arn"
+  RepositoryName:
+    Value: !Ref RepositoryName
+    Export:
+      Name: !Sub "${RepositoryName}-name"
