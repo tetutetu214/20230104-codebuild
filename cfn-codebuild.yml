@@ -234,15 +234,15 @@ https://dev.classmethod.jp/articles/cross-account-codecommit-codepipeline-with-c
 
 
 
-# ------------------------------------------------------------#
-# Output Parameters
-#------------------------------------------------------------#          
-# Outputs:
-#   CodeCommitArn:
-#     Value: !GetAtt CodeCommit.Arn
-#     Export:
-#       Name: !Sub "${RepositoryName}-arn"
-#   RepositoryName:
-#     Value: !Ref RepositoryName
-#     Export:
-#       Name: !Sub "${RepositoryName}-name"
+------------------------------------------------------------#
+Output Parameters
+------------------------------------------------------------#          
+Outputs:
+  CodeCommitArn:
+    Value: !GetAtt CodeCommit.Arn
+    Export:
+      Name: !Sub "${RepositoryName}-arn"
+  RepositoryName:
+    Value: !Ref RepositoryName
+    Export:
+      Name: !Sub "${RepositoryName}-name"
