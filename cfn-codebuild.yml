@@ -14,7 +14,7 @@ Metadata:
         - PACKAGED_TEMPLATE_FILE_PATH
         - BuildSpec
         - ArtifactStoreBucket
-        - ModuleNameOwner
+        - ModuleName
         - DevModuleStackName
         - DevDeployParamFile
 # ------------------------------------------------------------#
@@ -33,7 +33,7 @@ Parameters:
   ArtifactStoreBucket:
     Type: String
     Default: cfn-s3-20230103-inamura
-  ModuleNameOwner:
+  ModuleName:
     Type: String
     Default: cfn-codepipeline-inamura
   DevModuleStackName:
@@ -167,18 +167,18 @@ Resources:
                 StackName: !Ref DevModuleStackName
                 ChangeSetName: !Sub ${DevModuleStackName}-changeset
                 Capabilities: CAPABILITY_NAMED_IAM
-
-#################ここから構築スタート
-参考URL 
-https://qiita.com/ytaka95/items/5899c44c85e71fdc5273#param_devjson-param_prodjson
-https://www.protosolution.co.jp/approach/story/20211221.html
-https://qiita.com/leomaro7/items/41cbe8aa7c32298ec665
-https://dev.classmethod.jp/articles/delivery-by-codepipeline-codecommit-codebuild-codedeploy/#toc-7
-https://dev.classmethod.jp/articles/cross-account-codecommit-codepipeline-with-cfn/
-
                 TemplatePath: !Sub BuildOutput::${PACKAGED_TEMPLATE_FILE_PATH}
                 TemplateConfiguration: !Sub BuildOutput::${DevDeployParamFile}
               RunOrder: '1'
+
+#################ここから構築スタート
+# 参考URL 
+# https://qiita.com/ytaka95/items/5899c44c85e71fdc5273#param_devjson-param_prodjson
+# https://www.protosolution.co.jp/approach/story/20211221.html
+# https://qiita.com/leomaro7/items/41cbe8aa7c32298ec665
+# https://dev.classmethod.jp/articles/delivery-by-codepipeline-codecommit-codebuild-codedeploy/#toc-7
+# https://dev.classmethod.jp/articles/cross-account-codecommit-codepipeline-with-cfn/
+
 
             - Name: ExecuteChangeSet
               ActionTypeId:
