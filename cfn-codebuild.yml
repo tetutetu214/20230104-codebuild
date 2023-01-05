@@ -16,7 +16,7 @@ Metadata:
         - ArtifactStoreBucket
         - ModuleNameOwner
         - DevModuleStackName
-
+        - DevDeployParamFile
 # ------------------------------------------------------------#
 #  InputParameters
 # ------------------------------------------------------------#
@@ -39,7 +39,10 @@ Parameters:
   DevModuleStackName:
     Type: String
     Default: cfn-dev-codepipeline-inamura
-  
+  DevDeployParamFile:
+    Type: String
+    Default: param_dev.json
+
 # ------------------------------------------------------------#
 #  Resources
 # ------------------------------------------------------------#
