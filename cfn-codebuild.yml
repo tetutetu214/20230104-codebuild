@@ -30,12 +30,12 @@ Parameters:
   PackagedTemplateFilePath:
     Type: String
     Default: packaged.yml
-  BuildSpec:
-    Type: String
-    Default: pipeline_settings/buildspec.yml
   ArtifactStoreBucket:
     Type: String
     Default: cfn-s3-20230103-inamura
+  BuildSpec:
+    Type: String
+    Default: pipeline_settings/buildspec.yml
   DevModuleStackName:
     Type: String
     Default: cfn-dev-codepipeline-inamura
@@ -109,6 +109,13 @@ Resources:
                 Effect: Allow
                 Action: cloudformation:ValidateTemplate
                 Resource: "*"
+
+              - Sid: CodeBuildStartBuild
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${BuildName}
+
 # ------------------------------------------------------------#
 #  CodePipeline
 # ------------------------------------------------------------#
