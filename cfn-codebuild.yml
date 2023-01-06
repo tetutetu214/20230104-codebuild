@@ -21,9 +21,12 @@ Metadata:
 #  InputParameters
 # ------------------------------------------------------------#
 Parameters:
+  ModuleName:
+    Type: String
+    Default: cfn-codepipeline-inamura
   BuildName:
     Type: String
-    Default: cfn-codecommit-inamura
+    Default: cfn-codebuild-inamura
   PackagedTemplateFilePath:
     Type: String
     Default: packaged.yml
@@ -33,9 +36,6 @@ Parameters:
   ArtifactStoreBucket:
     Type: String
     Default: cfn-s3-20230103-inamura
-  ModuleName:
-    Type: String
-    Default: cfn-codepipeline-inamura
   DevModuleStackName:
     Type: String
     Default: cfn-dev-codepipeline-inamura
@@ -124,7 +124,6 @@ Resources:
         - Name: Source
           Actions:
             - Name: Source
-              InmputArtifacts: []
               ActionTypeId:
                 Category: Source
                 Owner: AWS
@@ -132,10 +131,11 @@ Resources:
                 Provider: CodeCommit
               Configuration:
                 RepositoryName: !ImportValue cfn-codecommit-inamura-name
-                BranchName: master
+                BranchName: main
                 PollForSourceChanges: false
               OutputArtifacts:
                 - Name: SourceOutput
+
         - Name: Build
           Actions:
             - InputArtifacts:
@@ -217,6 +217,10 @@ Resources:
                 Resource:
                   - !Sub arn:aws:s3:::${ArtifactStoreBucket}
                   - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
+              - Sid: CodeCommit
+                Effect: Allow
+                Action: codecommit:*
+                Resource: !ImportValue cfn-codecommit-inamura-arn
               - Sid: CodeBuildStartBuild
                 Effect: Allow
                 Action:
