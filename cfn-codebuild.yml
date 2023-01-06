@@ -11,7 +11,7 @@ Metadata:
           default: "Lambda Configuration"
         Parameters:
         - BuildName
-        - PACKAGED_TEMPLATE_FILE_PATH
+        - PackagedTemplateFilePath
         - BuildSpec
         - ArtifactStoreBucket
         - ModuleName
@@ -24,7 +24,7 @@ Parameters:
   BuildName:
     Type: String
     Default: cfn-codecommit-inamura
-  PACKAGED_TEMPLATE_FILE_PATH:
+  PackagedTemplateFilePath:
     Type: String
     Default: packaged.yml
   BuildSpec:
@@ -50,7 +50,7 @@ Resources:
 # ------------------------------------------------------------#
 #  CodeBuild
 # ------------------------------------------------------------#
-  BuildProject:
+  CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
       Artifacts:
@@ -60,8 +60,8 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
         EnvironmentVariables:
-          - Name: PACKAGED_TEMPLATE_FILE_PATH
-            Value: !Ref PACKAGED_TEMPLATE_FILE_PATH
+          - Name: PackagedTemplateFilePath
+            Value: !Ref PackagedTemplateFilePath
           - Name: S3_BUCKET
             Value: !Ref ArtifactStoreBucket
       Name: !Ref BuildName
@@ -70,7 +70,7 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: !Ref BuildSpec
 
-  BuildRole:
+  CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -110,13 +110,13 @@ Resources:
                 Action: cloudformation:ValidateTemplate
                 Resource: "*"
 # ------------------------------------------------------------#
-#  CodeDeploy
+#  CodePipeline
 # ------------------------------------------------------------#
-  PipelineDev:
+  CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       Name: !Ref ModuleName
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactStoreBucket
@@ -149,8 +149,10 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: !Ref BuildName
-
+                ProjectName: !Ref CodeBuildName
+      # ------------------------------------------------------------#
+      #  CodeDeploy
+      # ------------------------------------------------------------#
         - Name: Deploy
           Actions:
             - Name: CreateChangeSet
@@ -167,7 +169,7 @@ Resources:
                 StackName: !Ref DevModuleStackName
                 ChangeSetName: !Sub ${DevModuleStackName}-changeset
                 Capabilities: CAPABILITY_NAMED_IAM
-                TemplatePath: !Sub BuildOutput::${PACKAGED_TEMPLATE_FILE_PATH}
+                TemplatePath: !Sub BuildOutput::${PackagedTemplateFilePath}
                 TemplateConfiguration: !Sub BuildOutput::${DevDeployParamFile}
               RunOrder: '1'
 
@@ -184,7 +186,63 @@ Resources:
                 ChangeSetName: !Sub ${DevModuleStackName}-changeset
                 StackName: !Ref DevModuleStackName
               RunOrder: '2'
+# ------------------------------------------------------------#
+#  CodePipeline Role
+# ------------------------------------------------------------#
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: CodePipelineAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: S3GetObject
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
+              - Sid: S3PutObject
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}
+                  - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
+              - Sid: CodeBuildStartBuild
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ModuleName}
+              - Sid: CFnActions
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:DeleteChangeSet
+                Resource:
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${DevModuleStackName}/*
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ProdModuleStackName}/*
+              - Sid: PassRole
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !GetAtt PipelineDeployRole.Arn
 
+# ------------------------------------------------------------#
+#  CodeDeploy Role
+# ------------------------------------------------------------#
   PipelineDeployRole:
     Type: AWS::IAM::Role
     Properties:
@@ -226,11 +284,9 @@ Resources:
                   - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
 
 
-
-
-------------------------------------------------------------#
-Output Parameters
-------------------------------------------------------------#          
+#------------------------------------------------------------#
+#Output Parameters
+#------------------------------------------------------------#          
 Outputs:
   CodeCommitArn:
     Value: !GetAtt CodeCommit.Arn
