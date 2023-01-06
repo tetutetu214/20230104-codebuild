@@ -149,7 +149,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: !Ref CodeBuildName
+                ProjectName: !Ref BuildName
       # ------------------------------------------------------------#
       #  CodeDeploy
       # ------------------------------------------------------------#
@@ -233,7 +233,6 @@ Resources:
                   - cloudformation:DeleteChangeSet
                 Resource:
                   - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${DevModuleStackName}/*
-                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ProdModuleStackName}/*
               - Sid: PassRole
                 Effect: Allow
                 Action:
@@ -287,12 +286,12 @@ Resources:
 #------------------------------------------------------------#
 #Output Parameters
 #------------------------------------------------------------#          
-Outputs:
-  CodeCommitArn:
-    Value: !GetAtt CodeCommit.Arn
-    Export:
-      Name: !Sub "${RepositoryName}-arn"
-  RepositoryName:
-    Value: !Ref RepositoryName
-    Export:
-      Name: !Sub "${RepositoryName}-name"
+# Outputs:
+#   CodeCommitArn:
+#     Value: !GetAtt CodeCommit.Arn
+#     Export:
+#       Name: !Sub "${RepositoryName}-arn"
+#   RepositoryName:
+#     Value: !Ref RepositoryName
+#     Export:
+#       Name: !Sub "${RepositoryName}-name"
