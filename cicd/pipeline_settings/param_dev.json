@@ -1,6 +1,11 @@
 {
   "Parameters": {
-    "LambdaFunctionName": "TestFunctionDev",
-    "LambdaFunctionHandler": "lambda_handler.lambda_handler"
+    "FunctionName": "cfn-lmd-inamura",
+    "Description": "cfn-lmd-inamura",
+    "Handler": "index.lambda_handler",
+    "MemorySize": "128",
+    "Runtime": "python3.9",
+    "Timeout": "10",
+    "TagsName": "inamura"
   }
 }
