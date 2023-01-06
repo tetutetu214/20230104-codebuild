@@ -1,0 +1,7 @@
+#################ここから構築スタート
+# 参考URL 
+# https://qiita.com/ytaka95/items/5899c44c85e71fdc5273#param_devjson-param_prodjson
+# https://www.protosolution.co.jp/approach/story/20211221.html
+# https://qiita.com/leomaro7/items/41cbe8aa7c32298ec665
+# https://dev.classmethod.jp/articles/delivery-by-codepipeline-codecommit-codebuild-codedeploy/#toc-7
+# https://dev.classmethod.jp/articles/cross-account-codecommit-codepipeline-with-cfn/
