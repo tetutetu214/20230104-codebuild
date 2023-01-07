@@ -2,10 +2,12 @@
   "Parameters": {
     "FunctionName": "cfn-lmd-inamura",
     "Description": "cfn-lmd-inamura",
-    "Handler": "index.lambda_handler",
+    "Handler": "lambda_handler.lambda_handler",
     "MemorySize": "128",
     "Runtime": "python3.9",
     "Timeout": "10",
-    "TagsName": "inamura"
+    "TagsName": "inamura",
+    "S3Bucket": "cfn-s3-20230103-inamura",
+    "S3Key": "function.zip"
   }
 }
