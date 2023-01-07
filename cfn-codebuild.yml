@@ -60,7 +60,7 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
         EnvironmentVariables:
-          - Name: PackagedTemplateFilePath
+          - Name: PACKAGED_TEMPLATE_FILE_PATH
             Value: !Ref PackagedTemplateFilePath
           - Name: S3_BUCKET
             Value: !Ref ArtifactStoreBucket
@@ -110,11 +110,7 @@ Resources:
                 Action: cloudformation:ValidateTemplate
                 Resource: "*"
 
-              - Sid: CodeBuildStartBuild
-                Effect: Allow
-                Action:
-                  - codebuild:StartBuild
-                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${BuildName}
+ 
 
 # ------------------------------------------------------------#
 #  CodePipeline
@@ -233,7 +229,7 @@ Resources:
                 Action:
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
-                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ModuleName}
+                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${BuildName}
               - Sid: CFnActions
                 Effect: Allow
                 Action:
