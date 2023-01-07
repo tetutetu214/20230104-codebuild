@@ -15,8 +15,8 @@ Metadata:
         - BuildSpec
         - ArtifactStoreBucket
         - ModuleName
-        - DevModuleStackName
-        - DevDeployParamFile
+        - ModuleStackName
+        - DeployParamFile
 # ------------------------------------------------------------#
 #  InputParameters
 # ------------------------------------------------------------#
@@ -36,12 +36,12 @@ Parameters:
   BuildSpec:
     Type: String
     Default: pipeline_settings/buildspec.yml
-  DevModuleStackName:
+  ModuleStackName:
     Type: String
-    Default: cfn-dev-codepipeline-inamura
-  DevDeployParamFile:
+    Default: cfn-codepipeline-lambda-inamura
+  DeployParamFile:
     Type: String
-    Default: param_dev.json
+    Default: param.json
 
 # ------------------------------------------------------------#
 #  Resources
@@ -169,11 +169,11 @@ Resources:
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt PipelineDeployRole.Arn
-                StackName: !Ref DevModuleStackName
-                ChangeSetName: !Sub ${DevModuleStackName}-changeset
+                StackName: !Ref ModuleStackName
+                ChangeSetName: !Sub ${ModuleStackName}-changeset
                 Capabilities: CAPABILITY_NAMED_IAM
                 TemplatePath: !Sub BuildOutput::${PackagedTemplateFilePath}
-                TemplateConfiguration: !Sub BuildOutput::${DevDeployParamFile}
+                TemplateConfiguration: !Sub BuildOutput::${DeployParamFile}
               RunOrder: '1'
 
             - Name: ExecuteChangeSet
@@ -186,8 +186,8 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ActionMode: CHANGE_SET_EXECUTE
-                ChangeSetName: !Sub ${DevModuleStackName}-changeset
-                StackName: !Ref DevModuleStackName
+                ChangeSetName: !Sub ${ModuleStackName}-changeset
+                StackName: !Ref ModuleStackName
               RunOrder: '2'
 # ------------------------------------------------------------#
 #  CodePipeline Role
@@ -239,7 +239,7 @@ Resources:
                   - cloudformation:ExecuteChangeSet
                   - cloudformation:DeleteChangeSet
                 Resource:
-                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${DevModuleStackName}/*
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ModuleStackName}/*
               - Sid: PassRole
                 Effect: Allow
                 Action:
