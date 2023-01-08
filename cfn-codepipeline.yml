@@ -153,9 +153,7 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: !Ref BuildName
-      # ------------------------------------------------------------#
-      #  CodeDeploy
-      # ------------------------------------------------------------#
+
         - Name: Deploy
           Actions:
             - Name: CreateChangeSet
