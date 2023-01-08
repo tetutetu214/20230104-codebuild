@@ -10,24 +10,24 @@ Metadata:
       - Label:
           default: "Lambda Configuration"
         Parameters:
+        - PipelineName
         - BuildName
-        - PackagedTemplateFilePath
+        - PackagedTemplateFile
         - BuildSpec
         - ArtifactStoreBucket
-        - ModuleName
         - ModuleStackName
         - DeployParamFile
 # ------------------------------------------------------------#
 #  InputParameters
 # ------------------------------------------------------------#
 Parameters:
-  ModuleName:
+  PipelineName:
     Type: String
     Default: cfn-codepipeline-inamura
   BuildName:
     Type: String
     Default: cfn-codebuild-inamura
-  PackagedTemplateFilePath:
+  PackagedTemplateFile:
     Type: String
     Default: packaged.yml
   ArtifactStoreBucket:
@@ -61,7 +61,7 @@ Resources:
         Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
         EnvironmentVariables:
           - Name: PACKAGED_TEMPLATE_FILE_PATH
-            Value: !Ref PackagedTemplateFilePath
+            Value: !Ref PackagedTemplateFile
           - Name: S3_BUCKET
             Value: !Ref ArtifactStoreBucket
       Name: !Ref BuildName
@@ -118,7 +118,7 @@ Resources:
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Ref ModuleName
+      Name: !Ref PipelineName
       RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
         Type: S3
@@ -172,7 +172,7 @@ Resources:
                 StackName: !Ref ModuleStackName
                 ChangeSetName: !Sub ${ModuleStackName}-changeset
                 Capabilities: CAPABILITY_NAMED_IAM
-                TemplatePath: !Sub BuildOutput::${PackagedTemplateFilePath}
+                TemplatePath: !Sub BuildOutput::${PackagedTemplateFile}
                 TemplateConfiguration: !Sub BuildOutput::${DeployParamFile}
               RunOrder: '1'
 
@@ -261,7 +261,7 @@ Resources:
               Service: cloudformation.amazonaws.com
       Path: /
       Policies:
-        - PolicyName: !Sub ${ModuleName}DeployPolicy
+        - PolicyName: !Sub ${PipelineName}DeployPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
