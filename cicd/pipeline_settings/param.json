@@ -7,7 +7,5 @@
     "Runtime": "python3.9",
     "Timeout": "10",
     "TagsName": "inamura",
-    "S3Bucket": "cfn-s3-20230103-inamura",
-    "S3Key": "lambda_handler.zip"
   }
 }

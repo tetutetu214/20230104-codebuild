@@ -5,3 +5,31 @@
 # https://qiita.com/leomaro7/items/41cbe8aa7c32298ec665
 # https://dev.classmethod.jp/articles/delivery-by-codepipeline-codecommit-codebuild-codedeploy/#toc-7
 # https://dev.classmethod.jp/articles/cross-account-codecommit-codepipeline-with-cfn/
+
+Zip化 zip + zip名 + 対象
+zip -r cicd.zip pipeline_settings
+
+S3 Copy
+aws s3 cp cicd.zip s3://cfn-s3-20230103-inamura/cicd.zip 
+
+cfn 実行(IAMがない場合)
+【CodeCommitの設定】
+CF_STACK_NAME=cfn-codecommit-inamura
+TEMPLATE=cfn-codecommit.yml
+REPOSITORYNAME=cfn-codecommit-inamura
+TAGSNAME=inamura
+
+aws cloudformation create-stack --stack-name ${CF_STACK_NAME} --template-body file://${TEMPLATE} --parameters ParameterKey=RepositoryName,ParameterValue=${REPOSITORYNAME} ParameterKey=TagsName,ParameterValue=${TAGSNAME} | jq .
+
+
+
+CF_STACK_NAME=cfn-codecommit-inamura
+TEMPLATE=cfn-codecommit.yml
+REPOSITORYNAME=cfn-codecommit-inamura
+TAGSNAME=inamura
+
+aws cloudformation create-stack --stack-name ${CF_STACK_NAME} --template-body file://${TEMPLATE} --parameters ParameterKey=RepositoryName,ParameterValue=${REPOSITORYNAME} ParameterKey=TagsName,ParameterValue=${TAGSNAME} | jq .
+
+
+スタック削除
+aws cloudformation delete-stack --stack-name ${CF_STACK_NAME}
