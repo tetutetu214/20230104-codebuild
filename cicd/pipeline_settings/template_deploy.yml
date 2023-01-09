@@ -20,10 +20,7 @@ Parameters:
     Type: String
   TagsName:
     Type: String
-  # S3Bucket:
-  #   Type: String
-  # S3Key:
-  #   Type: String
+
 # ------------------------------------------------------------#
 #  Resources
 # ------------------------------------------------------------#
@@ -39,18 +36,6 @@ Resources:
       Handler: !Ref Handler
       MemorySize: !Ref MemorySize
       Runtime: !Ref Runtime
-      Code:
-      #   ZipFile: |
-      #     import json
-      #     def lambda_handler(event, context):
-      #     # TODO implement
-      #     print(event)
-      #     return {
-      #         'statusCode': 200,
-      #         'body': json.dumps('Hello Lambda!')
-      #     }
-      #  S3Bucket: !Ref S3Bucket
-      #  S3Key: !Ref S3Key
       Timeout: !Ref Timeout
       Role: !GetAtt LambdaRole.Arn
       Tags: 

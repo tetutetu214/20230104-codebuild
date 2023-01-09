@@ -69,7 +69,9 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Ref BuildSpec
-
+# ------------------------------------------------------------#
+#  CodeBuild Role
+# ------------------------------------------------------------#
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -109,8 +111,6 @@ Resources:
                 Effect: Allow
                 Action: cloudformation:ValidateTemplate
                 Resource: "*"
-
- 
 
 # ------------------------------------------------------------#
 #  CodePipeline
@@ -153,7 +153,9 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: !Ref BuildName
-
+      # ------------------------------------------------------------#
+      #  CFnDeploy
+      # ------------------------------------------------------------#
         - Name: Deploy
           Actions:
             - Name: CreateChangeSet
@@ -245,7 +247,7 @@ Resources:
                 Resource: !GetAtt PipelineDeployRole.Arn
 
 # ------------------------------------------------------------#
-#  CodeDeploy Role
+#  CFnDeploy Role
 # ------------------------------------------------------------#
   PipelineDeployRole:
     Type: AWS::IAM::Role
@@ -265,10 +267,6 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - dynamodb:*
-                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
-              - Effect: Allow
-                Action:
                   - lambda:*
                 Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
               - Effect: Allow
@@ -286,17 +284,3 @@ Resources:
                 Resource:
                   - !Sub arn:aws:s3:::${ArtifactStoreBucket}
                   - !Sub arn:aws:s3:::${ArtifactStoreBucket}/*
-
-
-#------------------------------------------------------------#
-#Output Parameters
-#------------------------------------------------------------#          
-# Outputs:
-#   CodeCommitArn:
-#     Value: !GetAtt CodeCommit.Arn
-#     Export:
-#       Name: !Sub "${RepositoryName}-arn"
-#   RepositoryName:
-#     Value: !Ref RepositoryName
-#     Export:
-#       Name: !Sub "${RepositoryName}-name"
